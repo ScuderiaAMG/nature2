@@ -6,6 +6,7 @@ import torch.nn as nn
 import torch.optim as optim
 from collections import deque, namedtuple
 from torch.utils.tensorboard import SummaryWriter
+from model import DQN
 
 Experience = namedtuple('Experience', ('state', 'action', 'reward', 'next_state', 'done'))
 

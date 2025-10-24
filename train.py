@@ -7,7 +7,15 @@ from agent import DQNAgent
 from utils import AtariPreprocessor, FrameStack
 
 def train(game_name, save_path):
-    env = gym.make(game_name)
+    # env = gym.make(game_name)
+    # 将 "BreakoutNoFrameskip-v4" 转换为 "ALE/Breakout-v5"
+    ale_game_name = f"ALE/{game_name.split('NoFrameskip')[0]}-v5"
+    env = gym.make(
+    ale_game_name,
+    frameskip=4,                  # 严格对齐论文的 frame skip=4
+    repeat_action_probability=0.0, # 禁用 sticky actions，确保行为确定
+    full_action_space=False       # 使用游戏的最小动作集
+)
     n_actions = env.action_space.n
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     agent = DQNAgent(n_actions, device, log_dir=f"runs/{game_name}")
@@ -28,9 +36,11 @@ def train(game_name, save_path):
         episode_reward = 0
 
         while total_env_frames < TARGET_FRAMES:
-            if total_env_frames % FRAME_SKIP == 0:
-                state = frame_stack.get_state()
-                action = agent.select_action(state)
+            # if total_env_frames % FRAME_SKIP == 0:
+            #     state = frame_stack.get_state()
+            #     action = agent.select_action(state)
+            state = frame_stack.get_state()
+            action = agent.select_action(state)
 
             next_obs, reward, terminated, truncated, _ = env.step(action)
             done = terminated or truncated
@@ -44,7 +54,7 @@ def train(game_name, save_path):
             agent.optimize_model()
 
             episode_reward += reward
-            total_env_frames += 1
+            total_env_frames += 4
 
             if done:
                 break
