@@ -58,7 +58,7 @@ Experience = namedtuple('Experience', ('state', 'action', 'reward', 'next_state'
 #         return self.size
 
 class ReplayBuffer:
-    def __init__(self, capacity=500_000):
+    def __init__(self, capacity=210_000):
         self.capacity = capacity
         self.size = 0        
         self.pos = 0  # 环形指针
