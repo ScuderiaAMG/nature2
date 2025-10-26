@@ -11,7 +11,7 @@ from model import DQN
 Experience = namedtuple('Experience', ('state', 'action', 'reward', 'next_state', 'done'))
 
 class ReplayBuffer:
-    def __init__(self, capacity=1_000_000):
+    def __init__(self, capacity=210_000):
         self.buffer = deque(maxlen=capacity)
 
     def push(self, *args):
