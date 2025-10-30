@@ -3,18 +3,21 @@ import gymnasium as gym
 import random
 import numpy as np
 import torch
+import os
 from agent import DQNAgent
 from utils import AtariPreprocessor, FrameStack
 
+
+
 def train(game_name, save_path):
-    # env = gym.make(game_name)
-    # 将 "BreakoutNoFrameskip-v4" 转换为 "ALE/Breakout-v5"
+    os.makedirs("models", exist_ok=True)
+    os.makedirs(f"runs/{game_name}", exist_ok=True)
     ale_game_name = f"ALE/{game_name.split('NoFrameskip')[0]}-v5"
     env = gym.make(
     ale_game_name,
-    frameskip=4,                  # 严格对齐论文的 frame skip=4
-    repeat_action_probability=0.0, # 禁用 sticky actions，确保行为确定
-    full_action_space=False       # 使用游戏的最小动作集
+    frameskip=4,                 
+    repeat_action_probability=0.0, 
+    full_action_space=False       
 )
     n_actions = env.action_space.n
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -28,7 +31,6 @@ def train(game_name, save_path):
         preprocessor = AtariPreprocessor()
         frame_stack = FrameStack()
 
-        # Random no-op start
         for _ in range(random.randint(1, 30)):
             obs, _, _, _, _ = env.step(0)
 
@@ -62,6 +64,7 @@ def train(game_name, save_path):
         if total_env_frames // 1_000_000 > (total_env_frames - 1) // 1_000_000:
             print(f"[{game_name}] Frames: {total_env_frames/1e6:.1f}M, Reward: {episode_reward}")
 
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
     torch.save(agent.policy_net.state_dict(), save_path)
     agent.writer.close()
     env.close()

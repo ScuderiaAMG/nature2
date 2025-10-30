@@ -61,9 +61,8 @@ class ReplayBuffer:
     def __init__(self, capacity=210_000):
         self.capacity = capacity
         self.size = 0        
-        self.pos = 0  # 环形指针
+        self.pos = 0  
         
-        # 预分配固定大小的 NumPy 数组
         self.states = np.empty((capacity, 4, 84, 84), dtype=np.float32)
         self.actions = np.empty((capacity,), dtype=np.int64)
         self.rewards = np.empty((capacity,), dtype=np.float32)
@@ -71,15 +70,14 @@ class ReplayBuffer:
         self.dones = np.empty((capacity,), dtype=np.bool_)
 
     def push(self, state, action, reward, next_state, done):
-        # 覆盖旧数据，而非追加
         self.states[self.pos] = state
         self.actions[self.pos] = action
         self.rewards[self.pos] = reward
         self.next_states[self.pos] = next_state
         self.dones[self.pos] = done
         
-        self.pos = (self.pos + 1) % self.capacity  # 环形更新
-        self.size = min(self.size + 1, self.capacity)  # 实际大小不超过 capacity
+        self.pos = (self.pos + 1) % self.capacity 
+        self.size = min(self.size + 1, self.capacity)  
 
     def sample(self, batch_size):
         idxs = np.random.randint(0, self.size, size=batch_size)
@@ -148,10 +146,8 @@ class DQNAgent:
         if len(self.memory) < batch_size:
             return
 
-        # experiences 是一个包含 5 个数组的元组
         states, actions, rewards, next_states, dones = self.memory.sample(batch_size)
 
-        # 直接转换为 tensor（注意：states 已是 np.array）
         state_batch = torch.tensor(states, dtype=torch.float32, device=self.device)
         action_batch = torch.tensor(actions, dtype=torch.long, device=self.device).unsqueeze(1)
         reward_batch = torch.tensor(rewards, dtype=torch.float32, device=self.device)
@@ -170,17 +166,14 @@ class DQNAgent:
             param.grad.data.clamp_(-1, 1)
         self.optimizer.step()
 
-        # Epsilon decay over first 1M env frames
         if self.steps_done < 1_000_000:
             self.epsilon = 1.0 - 0.9 * (self.steps_done / 1_000_000)
         else:
             self.epsilon = 0.1
 
-        # Log to TensorBoard
         self.writer.add_scalar('Loss', loss.item(), self.log_step)
         self.writer.add_scalar('Epsilon', self.epsilon, self.log_step)
         self.log_step += 1
 
-        # Update target network every 10k agent steps
         if self.steps_done % 10_000 == 0:
             self.target_net.load_state_dict(self.policy_net.state_dict())
