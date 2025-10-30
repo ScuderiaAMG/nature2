@@ -111,7 +111,7 @@ class DQNAgent:
             momentum=0.0,
             centered=False
         )
-        self.memory = ReplayBuffer(capacity=500_000)
+        self.memory = ReplayBuffer(capacity=210_000)
         self.writer = SummaryWriter(log_dir=log_dir)
         self.log_step = 0
 
