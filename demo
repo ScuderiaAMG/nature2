@@ -1,0 +1,8 @@
+# 验证Breakout模型（与论文数据对比）
+python verify_model_paper.py models/dqn_breakout.pth --game BreakoutNoFrameskip-v4
+
+# 验证Pong模型，开启渲染（查看游戏画面）
+python verify_model_paper.py models/dqn_pong.pth --game PongNoFrameskip-v4 --render
+
+# 自定义评估回合数（论文默认30，可调整为论文的30以保持一致）
+python verify_model_paper.py models/dqn_spaceinvaders.pth --game SpaceInvadersNoFrameskip-v4 --episodes 30
