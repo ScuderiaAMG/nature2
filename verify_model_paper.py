@@ -191,7 +191,7 @@ def verify_model(model_path, game_name="BreakoutNoFrameskip-v4", render=False, n
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="对齐论文标准验证DQN模型（复现性检查）")
-    parser.add_argument("model_path", help=".pth模型文件路径")
+    parser.add_argument("model_path", help="/home/legion/nature2/models/breakout_dqn.pth")
     parser.add_argument("--game", default="BreakoutNoFrameskip-v4", help="游戏名称（如BreakoutNoFrameskip-v4）")
     parser.add_argument("--render", action="store_true", help="是否渲染游戏画面（论文评估时不渲染）")
     parser.add_argument("--episodes", type=int, default=30, help="验证回合数（论文固定30回合）")
@@ -203,5 +203,5 @@ if __name__ == "__main__":
         game_name=args.game,
         render=args.render,
         n_episodes=args.episodes,
-        max_steps=args.max_frames
+        max_frames=args.max_frames
     )
