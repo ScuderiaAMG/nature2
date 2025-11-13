@@ -1,5 +1,13 @@
 # nature2
 
+On LEGION-Y7000P-IRX9
+
+Ubuntu20.04 LTS
+
+I7-14700HX 64GB
+
+NVIDIA GEFORCE RTX 4060 Laptop GPU 8GB
+
 ## 2025.10.25 First start.
 ## 2025.10.26 Second start.
 
