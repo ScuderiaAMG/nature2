@@ -5,7 +5,6 @@ import argparse
 from model import DQN
 from utils import AtariPreprocessor, FrameStack
 
-# 论文Extended Data Table 2核心数据：{游戏名称: (随机分数, 人类分数, 论文DQN分数±std, 论文归一化百分比)}
 PAPER_METRICS = {
     "Breakout": (3.0, 316.8, "316.8 (±?)", 100.0),  # 论文中DQN最优值
     "Pong": (-20.7, 9.3, "18.9 (±1.3)", 132.0),
@@ -28,7 +27,6 @@ PAPER_METRICS = {
     "StarGunner": (664.0, 10250.0, "57997 (±3152)", 598.1),
 }
 
-# 游戏名称映射：脚本输入名 → 论文中的游戏名
 GAME_NAME_MAPPING = {
     "BreakoutNoFrameskip-v4": "Breakout",
     "PongNoFrameskip-v4": "Pong",
@@ -52,23 +50,16 @@ GAME_NAME_MAPPING = {
 }
 
 def calculate_normalized_score(model_score, random_score, human_score):
-    """按论文公式计算归一化性能：100 × (模型分数 - 随机分数) / (人类分数 - 随机分数)"""
     if human_score == random_score:
         return 0.0
     return 100 * (model_score - random_score) / (human_score - random_score)
 
 def verify_model(model_path, game_name="BreakoutNoFrameskip-v4", render=False, n_episodes=30, max_frames=18000):
-    """
-    严格对齐论文评估标准验证模型，与论文数据直接对比
-    论文评估标准：30回合、每回合最多5分钟（18000帧）、ε=0.05、初始随机noop最多30步
-    """
-    # 1. 解析游戏名称（映射到论文中的名称）
     paper_game_name = GAME_NAME_MAPPING.get(game_name, game_name.split('NoFrameskip')[0])
     print(f"=== 模型验证（对齐论文《Human-level control through deep reinforcement learning》）===")
     print(f"验证游戏：{game_name} → 论文对应游戏：{paper_game_name}")
     print(f"评估参数：{n_episodes}回合 | 每回合最大帧数：{max_frames}（5分钟） | ε-greedy探索率：0.05")
     
-    # 2. 环境设置（完全匹配论文训练/评估配置）
     ale_game_name = f"ALE/{game_name.split('NoFrameskip')[0]}-v5"
     env_kwargs = {
         "frameskip": 4,
@@ -81,7 +72,6 @@ def verify_model(model_path, game_name="BreakoutNoFrameskip-v4", render=False, n
     env = gym.make(ale_game_name, **env_kwargs)
     n_actions = env.action_space.n
     
-    # 3. 设备与模型加载
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"使用设备：{device}")
     
@@ -94,24 +84,20 @@ def verify_model(model_path, game_name="BreakoutNoFrameskip-v4", render=False, n
         print(f"模型加载失败：{str(e)}")
         return
     
-    # 4. 预处理工具（与论文预处理一致：帧最大化去闪烁、灰度化、裁剪84×84、4帧堆叠）
     preprocessor = AtariPreprocessor()
     frame_stack = FrameStack(num_frames=4)
     
-    # 5. 按论文标准运行验证
     total_rewards = []
-    epsilon = 0.05  # 论文评估时固定ε=0.05
+    epsilon = 0.05  
     
     for episode in range(n_episodes):
         obs, _ = env.reset()
         frame_stack.reset()
         
-        # 初始随机noop步数（论文：1-30步随机）
         noop_steps = np.random.randint(1, 31)
         for _ in range(noop_steps):
             obs, _, _, _, _ = env.step(0)
         
-        # 初始化帧堆叠
         processed_frame = preprocessor.process(obs)
         frame_stack.add_frame(processed_frame)
         
@@ -120,7 +106,6 @@ def verify_model(model_path, game_name="BreakoutNoFrameskip-v4", render=False, n
         done = False
         
         while not done and frames < max_frames:
-            # 按论文ε-greedy策略选择动作
             state = frame_stack.get_state()
             state_tensor = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
             
@@ -130,33 +115,27 @@ def verify_model(model_path, game_name="BreakoutNoFrameskip-v4", render=False, n
             else:
                 action = env.action_space.sample()
             
-            # 执行动作（论文使用动作重复4帧）
             next_obs, reward, terminated, truncated, _ = env.step(action)
             done = terminated or truncated
             
-            # 预处理下一帧并堆叠
             processed_next_frame = preprocessor.process(next_obs)
             frame_stack.add_frame(processed_next_frame)
             
-            # 累计原始奖励（论文评估用原始奖励，训练时才裁剪）
             episode_reward += reward
             frames += 1
         
         total_rewards.append(episode_reward)
         print(f"回合 {episode+1:2d}/{n_episodes} | 奖励：{episode_reward:8.1f} | 步数：{frames:5d}")
     
-    # 6. 计算模型核心指标（对齐论文格式）
     model_mean = np.mean(total_rewards)
     model_std = np.std(total_rewards)
     model_normalized = None
     
-    # 查找论文对应指标并对比
     paper_random = paper_mean = paper_std = paper_normalized = None
     if paper_game_name in PAPER_METRICS:
         paper_random, paper_human, paper_score_str, paper_normalized = PAPER_METRICS[paper_game_name]
         model_normalized = calculate_normalized_score(model_mean, paper_random, paper_human)
     
-    # 7. 输出对比结果
     print("\n" + "="*80)
     print(f"{'指标':<20} {'当前模型':<20} {'论文DQN':<20} {'差异':<10}")
     print("-"*80)
@@ -170,9 +149,7 @@ def verify_model(model_path, game_name="BreakoutNoFrameskip-v4", render=False, n
         print(f"提示：当前游戏无论文参考数据，无法计算归一化对比")
     print("="*80)
     
-    # 8. 复现性判断
     if model_normalized is not None:
-        # 论文中归一化性能±10%视为合格复现
         if abs(model_normalized - paper_normalized) <= 10.0:
             print(f"✅ 模型复现性良好！归一化性能与论文差异在10%以内")
         elif abs(model_normalized - paper_normalized) <= 30.0:
