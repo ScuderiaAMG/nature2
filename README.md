@@ -14,7 +14,7 @@ We model each Atari 2600 game as a Markov Decision Process (MDP) defined by the 
 
 The objective of reinforcement learning is to discover an optimal policy $\pi^*: \mathcal{S} \to \mathcal{A}$ that maximizes the expected discounted cumulative return. Formally, the optimal action-value function $Q^*(s, a)$ satisfies the Bellman optimality equation:
 
-$$Q^*(s, a) = \mathbb{E}_{s' \sim \mathcal{P}(\cdot|s,a)}\left[ \mathcal{R}(s, a) + \gamma \max_{a' \in \mathcal{A}} Q^*(s', a') \right]$$
+$$Q^*(s, a) = \mathbb{E}_{s^{\prime} \sim \mathcal{P}(\cdot|s,a)}\left[ \mathcal{R}(s, a) + \gamma \max_{a^{\prime} \in \mathcal{A}} Q^*(s^{\prime}, a^{\prime}) \right]$$
 
 Given $Q^*$, the optimal policy is obtained deterministically: $\pi^*(s) = \arg\max_{a \in \mathcal{A}} Q^*(s, a)$.
 
@@ -24,7 +24,7 @@ In high-dimensional state spaces such as raw pixel observations, tabular represe
 
 The loss function at iteration $i$ is defined as:
 
-$$\mathcal{L}_i(\theta_i) = \mathbb{E}_{(s, a, r, s') \sim U(\mathcal{D})}\left[ \left( r + \gamma \max_{a'} Q(s', a'; \theta_i^-) - Q(s, a; \theta_i) \right)^2 \right]$$
+$$\mathcal{L}_i(\theta_i) = \mathbb{E}_{(s, a, r, s^{\prime}) \sim U(\mathcal{D})}\left[ \left( r + \gamma \max_{a^{\prime}} Q(s^{\prime}, a^{\prime}; \theta_i^-) - Q(s, a; \theta_i) \right)^2 \right]$$
 
 where $\theta_i^-$ denotes the parameters of a separate *target network*, which is held fixed during optimization and periodically synchronized with the online network $\theta_i$. This decoupling of action selection from target computation mitigates the harmful positive feedback loop (i.e., the *moving target problem*) inherent in bootstrapping methods.
 
@@ -34,7 +34,7 @@ Following the original paper, we replace the standard mean squared error (MSE) w
 
 $$\mathcal{L}_{\delta}(x) = \begin{cases} \frac{1}{2}x^2 & \text{for } |x| \leq \delta \\ \delta(|x| - \frac{1}{2}\delta) & \text{otherwise} \end{cases}$$
 
-where $x = r + \gamma \max_{a'} Q(s', a'; \theta_i^-) - Q(s, a; \theta_i)$ denotes the TD error, and $\delta = 1$ (the default in PyTorch's `smooth_l1_loss`). The Huber loss behaves quadratically near zero, providing the smoothness of MSE for small errors, while decaying linearly for large errors, thereby bounding the gradient magnitude.
+where $x = r + \gamma \max_{a^{\prime}} Q(s^{\prime}, a^{\prime}; \theta_i^-) - Q(s, a; \theta_i)$ denotes the TD error, and $\delta = 1$ (the default in PyTorch's `smooth_l1_loss`). The Huber loss behaves quadratically near zero, providing the smoothness of MSE for small errors, while decaying linearly for large errors, thereby bounding the gradient magnitude.
 
 ### 1.4 Exploration-Exploitation via Epsilon-Greedy Annealing
 
@@ -112,7 +112,7 @@ The complete training procedure is summarized as follows:
    - Sample a minibatch $\{(s_j, a_j, r_j, s_j')\}_{j=1}^{B}$ from $\mathcal{D}$.
    - Compute the target value for each sample:
 
-     $$y_j = \begin{cases} r_j & \text{if episode terminates at step } j+1 \\ r_j + \gamma \max_{a'} Q(s_j', a'; \theta^-) & \text{otherwise} \end{cases}$$
+     $$y_j = \begin{cases} r_j & \text{if episode terminates at step } j+1 \\ r_j + \gamma \max_{a^{\prime}} Q(s_j^{\prime}, a^{\prime}; \theta^-) & \text{otherwise} \end{cases}$$
 
    - Perform one gradient descent step on the Huber loss with respect to $\theta$.
    - Clip gradients elementwise to the interval $[-1, 1]$.
