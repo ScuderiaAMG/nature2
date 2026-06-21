@@ -16,8 +16,6 @@ The objective of reinforcement learning is to discover an optimal policy $\pi^*:
 
 $$Q^*(s, a) = \mathbb{E}_{s^{\prime} \sim \mathcal{P}(\cdot|s,a)}\left[ \mathcal{R}(s, a) + \gamma \max_{a^{\prime} \in \mathcal{A}} Q^*(s^{\prime}, a^{\prime}) \right]$$
 
-Given $Q^*$, the optimal policy is obtained deterministically: $\pi^*(s) = \arg\max_{a \in \mathcal{A}} Q^*(s, a)$.
-
 ### 1.2 Q-Learning with Function Approximation
 
 In high-dimensional state spaces such as raw pixel observations, tabular representations of Q-values become computationally intractable. The DQN approach employs a deep convolutional neural network $Q(s, a; \theta)$ parameterized by weights $\theta$ to approximate the optimal action-value function. The network is trained by iteratively minimizing the temporal difference (TD) error via stochastic gradient descent on minibatches drawn uniformly from an experience replay buffer $\mathcal{D} = \{e_1, e_2, \ldots, e_N\}$, where each experience tuple $e_t = (s_t, a_t, r_t, s_{t+1})$ records a single agent-environment interaction.
