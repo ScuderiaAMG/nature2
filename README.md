@@ -14,7 +14,7 @@ We model each Atari 2600 game as a Markov Decision Process (MDP) defined by the 
 
 The objective of reinforcement learning is to discover an optimal policy $\pi^*: \mathcal{S} \to \mathcal{A}$ that maximizes the expected discounted cumulative return. Formally, the optimal action-value function $Q^*(s, a)$ satisfies the Bellman optimality equation:
 
-$Q^*(s, a) = \mathbb{E}_{s^{\prime} \sim \mathcal{P}(\cdot|s,a)}\left[ \mathcal{R}(s, a) + \gamma \max_{a^{\prime} \in \mathcal{A}} Q^*(s^{\prime}, a^{\prime}) \right]$
+$$Q^*(s, a) = \mathbb{E}_{s^{\prime} \sim \mathcal{P}(\cdot|s,a)}\left[ \mathcal{R}(s, a) + \gamma \max_{a^{\prime} \in \mathcal{A}} Q^*(s^{\prime}, a^{\prime}) \right]$$
 
 Given $Q^*$, the optimal policy is obtained deterministically: $\pi^*(s) = \arg\max_{a \in \mathcal{A}} Q^*(s, a)$.
 
